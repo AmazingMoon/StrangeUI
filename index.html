@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<style>
+    .c1,
+    .c2 {
+        border: 4px solid black
+    }
+
+    .c2 {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        margin: 0 auto;
+    }
+
+    .demo-container {
+        position: relative;
+        background-color: gray;
+        text-align: center;
+    }
+
+    p {
+        color: red;
+    }
+</style>
+
+<body>
+    <p>曲线进度条</p>
+    <div class="demo-container">
+        <canvas id="curveProgressBar" width="200px" height="100px" class="c1"></canvas>
+        <canvas id="curveCurrentProgress" width="200px" height="100px" class="c2"></canvas>
+    </div>
+    <script>
+        function drawCurvePosition(start, end, curvature, percent) {
+            // 计算中间控制点
+            var cp = [
+                (start[0] + end[0]) / 2 - (start[1] - end[1]) * curvature,
+                (start[1] + end[1]) / 2 - (end[0] - start[0]) * curvature
+            ];
+            var t = percent / 100;
+            var p0 = start;
+            var p1 = cp;
+            var p2 = end;
+            var v01 = [p1[0] - p0[0], p1[1] - p0[1]];     // 向量<p0, p1>
+            var v12 = [p2[0] - p1[0], p2[1] - p1[1]];     // 向量<p1, p2>
+            var q0 = [p0[0] + v01[0] * t, p0[1] + v01[1] * t];
+            var q1 = [p1[0] + v12[0] * t, p1[1] + v12[1] * t];
+            var v = [q1[0] - q0[0], q1[1] - q0[1]];       // 向量<q0, q1>
+            var b = [q0[0] + v[0] * t, q0[1] + v[1] * t];
+            return { control: [q0[0], q0[1]], draw: [b[0], b[1]] }
+        }
+
+        var curveProgressBar = document.getElementById('curveProgressBar');
+        var barCtx = curveProgressBar.getContext('2d');
+        var barP = drawCurvePosition([4, 50], [196, 50], 0.2, 100)
+        barCtx.arc(4, 50, 4, 0, Math.PI * 2);
+        barCtx.arc(196, 50, 4, 0, Math.PI * 2);
+        barCtx.strokeStyle = "#ffffff";
+        barCtx.lineWidth = 3;
+        barCtx.fillStyle = "#ffffff";
+        barCtx.fill();
+        barCtx.beginPath();
+        barCtx.moveTo(4, 50);
+        barCtx.quadraticCurveTo(
+            barP.control[0], barP.control[1],
+            barP.draw[0], barP.draw[1]
+        )
+        barCtx.stroke();
+
+        var curveCurrentProgress = document.getElementById('curveCurrentProgress');
+        var currentCtx = curveCurrentProgress.getContext('2d');
+        var currentP = drawCurvePosition([4, 50], [196, 50], 0.2, 50)
+        currentCtx.beginPath();
+        currentCtx.fillStyle = "#01D2FF";
+        currentCtx.arc(4, 50, 4, 0, Math.PI * 2);
+        currentCtx.fill();
+        currentCtx.closePath();
+        currentCtx.beginPath();
+        currentCtx.fillStyle = "#166AFF";
+        currentCtx.arc(currentP.draw[0], currentP.draw[1], 4, 0, Math.PI * 2);
+        currentCtx.fill();
+        currentCtx.closePath();
+        var grd = currentCtx.createLinearGradient(4, 50, currentP.draw[0], currentP.draw[1]);
+        grd.addColorStop(0, "#00D1FF");
+        grd.addColorStop(1, "#1669FF");
+        currentCtx.strokeStyle = grd;
+        currentCtx.lineWidth = 4;
+        currentCtx.beginPath();
+        currentCtx.moveTo(4, 50);
+        currentCtx.quadraticCurveTo(
+            currentP.control[0], currentP.control[1],
+            currentP.draw[0], currentP.draw[1]
+        )
+        currentCtx.stroke();
+    </script>
+</body>
+
+</html>
